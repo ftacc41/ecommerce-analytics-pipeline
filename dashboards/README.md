@@ -5,7 +5,6 @@ This directory contains resources for creating and managing Metabase dashboards 
 ## Contents
 
 - **`screenshots/`** - Dashboard screenshots for portfolio showcase
-- **`DATA_EXTRACTION_GUIDE.md`** - Comprehensive guide mapping each dashboard component to database tables, columns, and SQL queries needed in Metabase.
 
 ## Dashboard Screenshots
 
