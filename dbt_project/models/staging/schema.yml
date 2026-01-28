@@ -1,0 +1,113 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Cleaned orders data with standardized timestamps"
+    columns:
+      - name: order_id
+        description: "Unique identifier for each order"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Foreign key to customer"
+      - name: order_status
+        description: "Current status of the order"
+      - name: purchased_at
+        description: "Timestamp when order was purchased"
+
+  - name: stg_order_items
+    description: "Cleaned order items data"
+    columns:
+      - name: order_id
+        description: "Foreign key to order"
+      - name: order_item_id
+        description: "Item sequence number within order"
+      - name: product_id
+        description: "Foreign key to product"
+      - name: seller_id
+        description: "Foreign key to seller"
+      - name: price
+        description: "Price of the item"
+      - name: freight_value
+        description: "Freight cost for the item"
+
+  - name: stg_order_payments
+    description: "Cleaned payment data"
+    columns:
+      - name: order_id
+        description: "Foreign key to order"
+      - name: payment_sequential
+        description: "Payment sequence number"
+      - name: payment_type
+        description: "Type of payment method"
+      - name: payment_value
+        description: "Payment amount"
+
+  - name: stg_customers
+    description: "Cleaned customer data"
+    columns:
+      - name: customer_id
+        description: "Unique identifier for customer (order-level)"
+        tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: "Unique identifier for customer (person-level)"
+      - name: customer_city
+        description: "Customer city"
+      - name: customer_state
+        description: "Customer state"
+
+  - name: stg_products
+    description: "Cleaned product data"
+    columns:
+      - name: product_id
+        description: "Unique identifier for product"
+        tests:
+          - unique
+          - not_null
+      - name: product_category_name
+        description: "Product category name"
+      - name: product_weight_g
+        description: "Product weight in grams"
+
+  - name: stg_sellers
+    description: "Cleaned seller data"
+    columns:
+      - name: seller_id
+        description: "Unique identifier for seller"
+        tests:
+          - unique
+          - not_null
+      - name: seller_city
+        description: "Seller city"
+      - name: seller_state
+        description: "Seller state"
+
+  - name: stg_order_reviews
+    description: "Cleaned review data"
+    columns:
+      - name: review_id
+        description: "Unique identifier for review"
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "Foreign key to order"
+      - name: review_score
+        description: "Review score (1-5)"
+
+  - name: stg_geolocation
+    description: "Cleaned geolocation data"
+    columns:
+      - name: geolocation_zip_code_prefix
+        description: "Zip code prefix"
+      - name: latitude
+        description: "Latitude coordinate"
+      - name: longitude
+        description: "Longitude coordinate"
+      - name: geolocation_city
+        description: "City name"
+      - name: geolocation_state
+        description: "State abbreviation"

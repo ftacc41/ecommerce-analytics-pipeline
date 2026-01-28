@@ -1,0 +1,442 @@
+# Analytics Engineering Project - Cursor Rules
+
+## 🎯 Project Mission
+Build a portfolio-ready analytics pipeline that demonstrates professional analytics engineering skills. Prioritize clarity, simplicity, and real-world best practices over complexity.
+
+## 📋 Core Principles
+
+### 1. Simplicity First
+- Start with the simplest solution that works
+- Add complexity only when there's a clear benefit
+- Readable code > clever code
+- If you can't explain it simply, refactor it
+
+### 2. Production-Ready Mindset
+- Write code as if a team will maintain it
+- Every script should have clear documentation
+- Error handling is not optional
+- Test before you commit
+
+### 3. Portfolio Quality
+- Every file should be showcase-worthy
+- Comments explain WHY, not WHAT
+- READMEs should enable someone to run the project in 15 minutes
+- Screenshots and diagrams matter as much as code
+
+---
+
+## 🐍 Python Guidelines
+
+### Code Style
+- Follow PEP 8 conventions
+- Use type hints for function signatures
+- Keep functions under 50 lines (ideally under 30)
+- One responsibility per function
+
+### Example Structure
+```python
+import pandas as pd
+from sqlalchemy import create_engine
+from typing import List, Dict
+
+def load_csv_to_postgres(
+    csv_path: str,
+    table_name: str,
+    connection_string: str
+) -> None:
+    """
+    Load CSV file into PostgreSQL table.
+    
+    Args:
+        csv_path: Path to CSV file
+        table_name: Target PostgreSQL table name
+        connection_string: SQLAlchemy connection string
+    
+    Raises:
+        FileNotFoundError: If CSV doesn't exist
+        ValueError: If CSV is empty
+    """
+    # Implementation here
+```
+
+### Requirements
+- Always include requirements.txt or pyproject.toml
+- Pin major versions: `pandas>=2.0.0,<3.0.0`
+- Add comments explaining why specific versions are needed
+- Keep dependencies minimal
+
+### Error Handling
+- Use try-except for file operations and database connections
+- Log errors, don't just print them
+- Provide actionable error messages
+- Example: "CSV file not found at /data/raw/orders.csv. Did you download the Kaggle dataset?"
+
+---
+
+## 🗄️ SQL & dbt Guidelines
+
+### dbt Model Organization
+```
+models/
+├── staging/          # stg_* models - one per source table
+├── intermediate/     # int_* models - business logic
+└── marts/           # fct_* and dim_* models - final tables
+```
+
+### SQL Style
+- Use lowercase for SQL keywords: `select`, `from`, `where`
+- Use trailing commas for column lists
+- One column per line in SELECT statements
+- CTEs (WITH clauses) over subqueries
+- Meaningful CTE names that explain the transformation
+
+### dbt Best Practices
+- **Every model needs a schema.yml** with descriptions and tests
+- **Staging models**: Light cleaning only, no joins
+- **Intermediate models**: Business logic, joins, deduplication
+- **Marts models**: Final dimensional models optimized for BI
+- **Use ref() and source()**: Never hardcode table names
+- **Incremental models**: Only when data volume requires it (not needed for this project)
+
+### Example dbt Model
+```sql
+-- models/staging/stg_orders.sql
+-- Purpose: Clean and standardize raw orders data
+
+with source as (
+    select * from {{ source('ecommerce', 'olist_orders_dataset') }}
+),
+
+cleaned as (
+    select
+        order_id,
+        customer_id,
+        order_status,
+        order_purchase_timestamp::timestamp as purchased_at,
+        order_approved_at::timestamp as approved_at,
+        order_delivered_customer_date::timestamp as delivered_at,
+        order_estimated_delivery_date::timestamp as estimated_delivery_at
+    from source
+)
+
+select * from cleaned
+```
+
+### Testing Strategy
+**Minimum tests for every mart model:**
+- Primary key: `unique` + `not_null`
+- Foreign keys: `relationships` test
+- Business rules: `accepted_values` for status fields
+- Data quality: Custom tests for nulls in critical fields
+
+---
+
+## 🐳 Docker Guidelines
+
+### Keep It Simple
+- Use official images when possible: `postgres:15-alpine`, `apache/airflow:2.7.0`
+- Document every environment variable in docker-compose.yml
+- Use `.env` files for sensitive values (and gitignore them)
+- Include health checks for critical services
+
+### docker-compose.yml Structure
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: analytics
+      POSTGRES_PASSWORD: ${DB_PASSWORD}  # From .env file
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+```
+
+---
+
+## 📁 File Organization
+
+### Directory Structure Rules
+- Keep related files together
+- Use descriptive folder names (no abbreviations like `src/`)
+- Include README.md in every major directory
+- Separate code, data, and documentation
+
+### Naming Conventions
+**Python files**: `snake_case.py` (e.g., `load_to_postgres.py`)
+**dbt models**: `stg_`, `int_`, `fct_`, `dim_` prefixes
+**SQL files**: Match table names exactly
+**Config files**: Descriptive names (e.g., `docker-compose.yml`, not `dc.yml`)
+
+### .gitignore Essentials
+```
+# Data files (too large for git)
+data/raw/
+*.csv
+*.parquet
+
+# Environment files
+.env
+venv/
+__pycache__/
+
+# dbt artifacts
+dbt_project/target/
+dbt_project/logs/
+dbt_project/dbt_packages/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+---
+
+## 📚 Documentation Standards
+
+### README Requirements
+Every README should answer:
+1. **What** does this do?
+2. **Why** does it exist?
+3. **How** do I run it?
+4. **What** are the dependencies?
+
+### Code Comments
+```python
+# GOOD: Explains WHY
+# Using bulk insert instead of row-by-row for 10x faster performance
+df.to_sql(table_name, engine, method='multi', chunksize=1000)
+
+# BAD: Explains WHAT (code already shows this)
+# Insert dataframe into SQL
+df.to_sql(table_name, engine)
+```
+
+### dbt Model Documentation
+```yaml
+# models/schema.yml
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Order-level fact table with metrics and foreign keys to dimensions"
+    columns:
+      - name: order_id
+        description: "Unique identifier for each order"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Foreign key to dim_customers"
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+```
+
+---
+
+## 🧪 Testing & Quality
+
+### When to Write Tests
+- **Always**: Primary keys, foreign keys, not null constraints
+- **Business Critical**: Revenue calculations, customer counts
+- **Data Quality**: Expected value ranges, format validation
+
+### dbt Test Example
+```yaml
+# Custom test for revenue validation
+tests:
+  - name: revenue_is_positive
+    description: "All orders should have positive revenue"
+    query: |
+      select *
+      from {{ ref('fct_orders') }}
+      where total_revenue <= 0
+```
+
+### Pre-Commit Checklist
+- [ ] Code runs without errors
+- [ ] All dbt tests pass (`dbt test`)
+- [ ] README is updated
+- [ ] No sensitive data in code
+- [ ] Requirements.txt is updated
+
+---
+
+## 🚀 Development Workflow
+
+### Start Every Session
+1. Pull latest changes: `git pull`
+2. Check project context: Review `project_context.md`
+3. Identify today's task from checklist
+4. Create feature branch: `git checkout -b feature/add-customer-dimension`
+
+### End Every Session
+1. Run all tests
+2. Commit with descriptive message
+3. Push to GitHub
+4. Update project checklist
+
+### Git Commit Messages
+```
+✅ GOOD:
+"Add staging model for orders with delivery timestamp parsing"
+"Fix: Handle null values in product category dimension"
+"Docs: Add setup instructions to ingestion README"
+
+❌ BAD:
+"update"
+"fix bug"
+"changes"
+```
+
+---
+
+## 💡 When to Ask Cursor for Help
+
+### Good Use Cases
+- "Generate a dbt schema.yml for this staging model with appropriate tests"
+- "Write a Python function to load this CSV into PostgreSQL with error handling"
+- "Review this SQL query for performance optimization opportunities"
+- "Create a README template for the ingestion directory"
+
+### Not-So-Good Use Cases
+- "Build the entire project for me" (too broad)
+- "Make this perfect" (vague)
+- "Fix this" without context (not enough info)
+
+### Effective Prompting
+```
+GOOD: "I'm building a dimension table for customers. I need to:
+1. Join customers with their order history
+2. Calculate total_orders and lifetime_value
+3. Add SCD Type 1 logic for address changes
+Can you help me write the dbt model?"
+
+BAD: "Write customer dimension"
+```
+
+---
+
+## 🎨 Dashboard & Visualization
+
+### Metabase Dashboard Principles
+- **One metric per visualization** - don't overcrowd
+- **Start with filters** - date range, category, region
+- **Progressive disclosure** - summary → detail drill-downs
+- **Consistent colors** - revenue = green, costs = red
+- **Add context** - comparison to previous period, targets
+
+### Chart Selection Guide
+- **KPI cards**: Single metrics (total revenue, customer count)
+- **Line charts**: Trends over time (monthly revenue)
+- **Bar charts**: Comparisons (revenue by category)
+- **Tables**: Detailed drill-downs (top 10 products)
+- **Pie charts**: AVOID (hard to read, use bar charts instead)
+
+---
+
+## 🔒 Security & Best Practices
+
+### Never Commit
+- Passwords or API keys
+- Real customer data
+- `.env` files
+- Database dumps with PII
+
+### Use Environment Variables
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+if not DB_PASSWORD:
+    raise ValueError("DB_PASSWORD not set in .env file")
+```
+
+### Sample .env Template
+```bash
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ecommerce
+DB_USER=analytics
+DB_PASSWORD=your_password_here
+
+# Don't commit this file! It's in .gitignore
+```
+
+---
+
+## 📊 Performance Considerations
+
+### For This Project (100k rows)
+- **Don't over-optimize** - premature optimization wastes time
+- **Indexes**: Not needed for datasets this small
+- **Partitioning**: Overkill for this size
+- **Materialization**: Use dbt tables, not views (views are slow in Metabase)
+
+### If Scaling Up Later
+- Add indexes on foreign keys and date columns
+- Use incremental models in dbt
+- Implement partitioning by date
+- Consider columnar storage (Parquet, DuckDB)
+
+---
+
+## ✨ Final Reminders
+
+1. **This is a portfolio project** - code quality matters more than features
+2. **Ship incrementally** - one working feature > three half-done features
+3. **Document as you go** - future you will thank present you
+4. **Test early, test often** - broken code in production looks bad
+5. **Keep it simple** - if you're struggling, the solution is probably simpler than you think
+
+---
+
+## 🆘 Troubleshooting
+
+### Common Issues
+**Docker container won't start:**
+- Check if port is already in use: `lsof -i :5432`
+- Review logs: `docker logs <container_name>`
+
+**dbt models fail:**
+- Run with verbose logging: `dbt run --debug`
+- Check `dbt_project/logs/dbt.log`
+
+**CSV won't load to PostgreSQL:**
+- Verify CSV encoding (should be UTF-8)
+- Check for malformed rows with `pandas.read_csv()`
+- Look for column name mismatches
+
+### Getting Unstuck
+1. Read the error message carefully
+2. Check the logs
+3. Google the exact error (include library name)
+4. Ask Cursor with full context (error message + what you were trying to do)
+5. Take a break and come back with fresh eyes
+
+---
+
+**Remember: Professional analytics engineers ship working code, not perfect code. Focus on clarity, documentation, and incremental progress.**

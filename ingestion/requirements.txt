@@ -1,0 +1,9 @@
+# Data ingestion dependencies
+# Using pandas 2.x for better performance and type handling
+pandas>=2.0.0,<3.0.0
+# PostgreSQL adapter for SQLAlchemy
+psycopg2-binary>=2.9.0
+# SQLAlchemy for database operations
+sqlalchemy>=2.0.0
+# python-dotenv for environment variable management
+python-dotenv>=1.0.0

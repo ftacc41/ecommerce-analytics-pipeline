@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: ecommerce
+    description: "Raw e-commerce data from Kaggle Brazilian E-Commerce dataset"
+    schema: public
+    tables:
+      - name: olist_orders_dataset
+        description: "Order details and status information"
+      - name: olist_order_items_dataset
+        description: "Items within each order"
+      - name: olist_order_payments_dataset
+        description: "Payment information for orders"
+      - name: olist_customers_dataset
+        description: "Customer demographic data"
+      - name: olist_products_dataset
+        description: "Product catalog information"
+      - name: olist_sellers_dataset
+        description: "Seller information"
+      - name: olist_order_reviews_dataset
+        description: "Customer reviews for orders"
+      - name: olist_geolocation_dataset
+        description: "Zip code geolocation data"
