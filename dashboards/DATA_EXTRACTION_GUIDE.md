@@ -66,29 +66,71 @@ All tables are in the `public_marts` schema. Use schema-qualified names: `public
 
 ## 2. Customer Analytics Dashboard
 
-### 2.1 Customer Cohort Retention (Cohort Table)
+### 2.1 Cohort lifetime length
 **Data Source**: `public_marts.customer_metrics`
-- **Key Columns**:
-  - `customer_unique_id`
-  - `cohort_month` (first order month)
-  - `months_since_first_order`
-  - `total_orders`
-- **Additional Join**: May need `public_marts.fct_orders` for order dates
-- **Note**: Metabase cohort analysis requires:
-  - Cohort date: `cohort_month`
-  - Period: `months_since_first_order`
-  - Metric: `total_orders` or count of customers
 
-### 2.2 CLV Distribution (Histogram)
+**What this measures:** Customer “lifetime length” in months, defined as the time between a customer’s first and last order. This is **not** month-by-month retention; it’s a cohort-level summary of how long customers remain active.
+
+- **Cohort key**: `cohort_month` (first order month)
+- **Metric input**: `months_since_first_order` (months between first and last order)
+- **Optional context**: `total_orders` (how many orders each customer placed)
+- **Recommended visualization**: Bar/line chart by `cohort_month` showing `avg_months_active` and/or `median_months_active`
+
+**SQL (ready to copy):**
+
+```sql
+select
+  cohort_month::date as cohort_month,
+  count(*) as customers,
+  avg(months_since_first_order) as avg_months_active,
+  percentile_cont(0.5) within group (order by months_since_first_order) as median_months_active,
+  avg(total_orders) as avg_orders_per_customer
+from public_marts.customer_metrics
+where cohort_month is not null
+  and months_since_first_order is not null
+group by 1
+order by 1;
+```
+
+### 2.2 CLV Distribution (Histogram/Bar Chart)
 **Data Source**: `public_marts.dim_customers`
-- **Column**: `lifetime_value`
 - **Query**: 
   ```sql
-  SELECT lifetime_value 
-  FROM public_marts.dim_customers
-  WHERE lifetime_value > 0
+  WITH clv_bins AS (
+    SELECT 
+      CASE 
+        WHEN lifetime_value = 0 THEN '0'
+        WHEN lifetime_value < 50 THEN '1-49'
+        WHEN lifetime_value < 100 THEN '50-99'
+        WHEN lifetime_value < 200 THEN '100-199'
+        WHEN lifetime_value < 500 THEN '200-499'
+        WHEN lifetime_value < 1000 THEN '500-999'
+        WHEN lifetime_value < 2000 THEN '1000-1999'
+        ELSE '2000+'
+      END AS clv_range,
+      CASE 
+        WHEN lifetime_value = 0 THEN 1
+        WHEN lifetime_value < 50 THEN 2
+        WHEN lifetime_value < 100 THEN 3
+        WHEN lifetime_value < 200 THEN 4
+        WHEN lifetime_value < 500 THEN 5
+        WHEN lifetime_value < 1000 THEN 6
+        WHEN lifetime_value < 2000 THEN 7
+        ELSE 8
+      END AS sort_order
+    FROM public_marts.dim_customers
+    WHERE lifetime_value >= 0
+  )
+  SELECT 
+    clv_range,
+    COUNT(*) AS customer_count
+  FROM clv_bins
+  GROUP BY clv_range
+  ORDER BY MIN(sort_order);
   ```
-- **Visualization**: Histogram with `lifetime_value` as the metric
+- **Visualization**: Bar chart with:
+  - X-axis: `clv_range` (CLV bins)
+  - Y-axis: `customer_count` (number of customers in each bin)
 
 ### 2.3 New vs Returning Customers (Pie/Bar Chart)
 **Data Source**: `public_marts.customer_metrics`

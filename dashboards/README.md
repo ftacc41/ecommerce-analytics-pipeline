@@ -16,7 +16,7 @@ This directory contains resources for creating and managing Metabase dashboards 
    - Geographic distribution
 
 2. **Customer Analytics Dashboard**
-   - Customer cohort retention
+   - Cohort lifetime length
    - CLV distribution
    - New vs returning customers
    - Customer segmentation breakdown

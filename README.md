@@ -46,9 +46,17 @@ cd analytics_project_1
 ```bash
 cp .env.example .env
 # Edit .env with your preferred database credentials
+# For Airflow: set AIRFLOW__CORE__FERNET_KEY (generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+# Optional: AIRFLOW_DB=airflow (Airflow uses a separate database on the same Postgres)
 ```
 
-4. **Start Docker services**
+4. **Create Airflow database (one-time, if you already have Postgres data)**  
+   If Postgres was started before the init script existed, create the Airflow DB manually:
+   ```bash
+   docker exec ecommerce_postgres psql -U analytics -d ecommerce -c "CREATE DATABASE airflow;"
+   ```
+
+5. **Start Docker services**
 ```bash
 docker-compose up -d
 ```
@@ -58,13 +66,13 @@ This starts:
 - Metabase (port 3000)
 - Airflow (port 8080)
 
-5. **Load data into PostgreSQL**
+6. **Load data into PostgreSQL**
 ```bash
 pip install -r ingestion/requirements.txt
 python ingestion/load_to_postgres.py
 ```
 
-6. **Run dbt transformations**
+7. **Run dbt transformations**
 ```bash
 cd dbt_project
 dbt deps  # Install dbt packages
@@ -72,7 +80,7 @@ dbt run   # Run all models
 dbt test  # Run all tests
 ```
 
-7. **Access dashboards**
+8. **Access dashboards**
    - Metabase: http://localhost:3000
    - Airflow: http://localhost:8080 (airflow/airflow)
 
