@@ -4,7 +4,22 @@ This directory contains resources for creating and managing Metabase dashboards 
 
 ## Contents
 
+- **`screenshots/`** - Dashboard screenshots for portfolio showcase
 - **`DATA_EXTRACTION_GUIDE.md`** - Comprehensive guide mapping each dashboard component to database tables, columns, and SQL queries needed in Metabase.
+
+## Dashboard Screenshots
+
+### Executive Summary Dashboard
+![Executive Summary Dashboard](screenshots/executive_summary.png)
+
+### Customer Analytics Dashboard
+![Customer Analytics Dashboard](screenshots/customer_analytics.png)
+
+### Product Performance Dashboard
+![Product Performance Dashboard](screenshots/product_performance.png)
+
+### Operational Insights Dashboard
+![Operational Insights Dashboard](screenshots/operational_insights.png)
 
 ## Planned Dashboards
 
